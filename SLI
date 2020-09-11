@@ -1,0 +1,700 @@
+   
+def c = close;
+def h = high;
+def l = low;
+def o = open;
+
+def sDev = StDev(data = close, length = 21);
+def MA21 = Average(close, 21);
+
+def UpperBand = MA21 + 2 * sDev;
+def MidLine = MA21;
+def LowerBand = MA21 - 2 * sDev;
+def RisingBBB =  LowerBand[0] > LowerBand[1] ;
+def FallingTBB = UpperBand[0] < UpperBand[1]  ;
+def RisingTBB = UpperBand[0] > UpperBand[1]  ;
+def FallingBBB =  LowerBand[0] < LowerBand[1] ;
+def PercentDiF = (UpperBand - LowerBand) / ((UpperBand + LowerBand) / 2) * 100;
+def ExpandingBB = if PercentDiF[0] >= PercentDiF[1] && PercentDiF[1] >= PercentDiF[2] && PercentDiF[0] > PercentDiF[2] &&  UpperBand[0] > UpperBand[1] &&  LowerBand[0] < LowerBand[1]  then 1 else 0;
+def ConverginBB = if PercentDiF[0] <= PercentDiF[1] && PercentDiF[1] <= PercentDiF[2] && PercentDiF[0] < PercentDiF[2] &&  UpperBand[0] < UpperBand[1] &&  LowerBand[0] > LowerBand[1] then 1 else 0;
+def FlatBBB = if LowerBand[0] == LowerBand[1]  then 1 else 0;
+def FlatTBB = if UpperBand[0] == UpperBand[1] then 1 else 0;
+
+#If last candle body closed outside BBB or equal to BBB and current candle or is greater than BBB and white then this would be a FC Entry and FP Exit
+def t1 = c[1] <= LowerBand[1] and c > LowerBand and c > o;
+def t1b = t1[1];
+
+#If last candle body closed outside TBB or equal to TBB and current candle is below TBB and red then this would be a FP Entry and FC Exit
+def t2 = c[1] >= UpperBand[1] and c < UpperBand and c < o;
+def t2b = t2[1];
+
+#If Candle Wick >=  TBB on current candle or last candle this can = PC exit and PP entry
+def t3a = h >= UpperBand and (FlatTBB or FallingTBB);
+def t3 = t3a;
+def t3b = t3a[1];
+#If Candle wick is <= BBB on current candle or last candle = PP exit and PC entry
+def t4a = l <= LowerBand and  (FlatBBB or RisingBBB);
+def t4 = t4a;
+def t4b = t4a[1];
+
+#If Candle Wick >=  TBB on current candle or last candle this can = PC exit and PP entry
+def t36a = h >= UpperBand and (ExpandingBB or RisingTBB );
+def t36 = t36a;
+def t36b = t36[1];
+#If Candle wick is <= BBB on current candle or last candle = PP exit and PC entry
+def t37a = l <= LowerBand and  (ExpandingBB or FallingBBB);
+def t37 = t37a;
+def t37b = t37a[1];
+
+script ma {
+    input l = 10;
+    plot ma = Average(close, l);
+}
+#233MA & 55MA & 21MA & 34 & 89 & 144 
+#If candle Body opens above MA and is currently below the MA then this = PP entry and PC exit
+def t7a = (o > ma(233) and c < ma(233)) or (o > ma(55) and c < ma(55)) or (o > ma(21) and c < ma(21)) or (o > ma(34) and c < ma(34)) or  (o > ma(89) and c < ma(89)) or  (o > ma(144) and c < ma(144));
+def t7 = t7a;
+def t7b = t7a[1];
+#If candle body opens below MA and is currently above the MA then this = PC entry and PP exit
+def t8a = (o < ma(233) and c > ma(233)) or (o < ma(55) and c > ma(55)) or (o < ma(21) and c > ma(21)) or (o < ma(34) and c > ma(34)) or  (o < ma(89) and c > ma(89)) or  (o < ma(144) and c > ma(144));
+def t8 = t8a;
+def t8b = t8a[1];
+
+#MA about to cross code
+def CCr = Average(close, 2);
+def CCg = Average(close[3], 3);
+def CCGPercentDiF = (CCr - CCg) / ((CCr + CCg) / 2) * 100;
+def CCRPercentDiF = (CCg - CCr) / ((CCg + CCr) / 2) * 100;
+
+#MA2 red about to cross above green MA3 = FC entry and FP exit
+def C1a = CCr[0] <= CCg[0] &&  CCRPercentDiF[1] >= 4 &&  CCRPercentDiF[0] <= 2;
+def C1 = C1a;
+def c1b = C1a[1];
+#MA2 red about to cross below green MA3 = FP entry and FC exit
+def C2a = CCr[0] >= CCg[0] &&  CCGPercentDiF[1] >= 4 &&  CCGPercentDiF[0] <= 2;
+def C2 = C2a;
+
+#If 2MA crossed below 3 MA on current candle or previous candle this = FP entry and FC exit
+def t9a = ma(2) < ma(3)[3] and ma(2)[1] > ma(3)[4];
+def t9 = t9a;
+def t9b = t9a[1];
+#If 2MA crossed above 3 MA on current candle or previous candle this = FC entry and FP exit
+def t10a = ma(2) > ma(3)[3] and ma(2)[1] < ma(3)[4];
+def t10 = t10a;
+def t10b = t10a[1];
+
+#RSI CODE
+def RSI =  RSI(length = 13).RSI;
+def highestRSI = Highest(RSI, 21);
+def lowestRSI = Lowest(RSI, 21);
+
+def RSIS = 100 * (RSI - lowestRSI) / (highestRSI - lowestRSI);
+
+def k = Average(RSIS, 3);
+def d = Average(k, 5);
+
+def DPercentDiF = (k - d) / ((k + d) / 2) * 100;
+def KPercentDiF = (d - k) / ((d + k) / 2) * 100;
+
+# IF K % is about to cross above D % = FC entry FP exit
+def C3a = k[0] <= d[0] &&  KPercentDiF[1] >= 10 &&  KPercentDiF[0] <= 5;
+def c3 = C3a;
+# IF K % is about to cross below D % = FP entry FC exit
+def c4a = k[0] >= d[0] &&  DPercentDiF[1] >= 10 &&  DPercentDiF[0] <= 5;
+def c4 = c4a;
+#If K % crossed below D% on current candle or previous candle this = FP entry and FC exit
+def t11a = k < d and k[1] > d[1];
+def t11 = t11a;
+def t11b = t11a[1];
+
+#If K % crossed above D% on current candle or previous candle this = FC entry and FP exit
+def t12a = k > d and k[1] < d[1];
+def t12 = t12a;
+def t12b = t12a[1];
+#If K% and D% are below the 20 line on current candle or last this is a PC entry and PP exit 
+def t13a = k < 20 and d < 20;
+def t13 = t13a;
+def t13b = t13a[1];
+#If K% and D% are above the 80 line on current candle or last this is a PP entry and PC exit 
+def  t14a = k > 80 and d > 80;
+def t14 = t14a;
+def t14b = t14a[1];
+
+def macdV = MACD(8, 13, 5).value;
+def macdA = MACD(8, 13, 5).avg;
+def zeroline = 0;
+
+def VPercentDiFbl0 = (macdV * -1 - macdA * -1) / ((macdV * -1 + macdA * -1) * -1 / 2) * 100;
+def APercentDiFbl0 = (macdA * -1 - macdV * -1) / ((macdA * -1 + macdV * -1) * -1 / 2) * 100;
+
+def VPercentDiFab0 = (macdV - macdA) / ((macdV + macdA) / 2) * 100;
+def APercentDiFab0 = (macdA - macdV) / ((macdA + macdV) / 2) * 100;
+
+#IF Value is about to cross above Avg and above 0 lines = FC entry FP exit
+def C10a = macdV[0] <= macdA[0]   && APercentDiFab0[1] >= 4 &&  APercentDiFab0[0] <= 3 && macdV > zeroline && macdA > zeroline ;
+def c10 = C10a;
+# IF Value is about to cross below AVG abd above 0 line = FP entry FC exit
+def c9a = (macdV[0] >= macdA[0]) > zeroline  && VPercentDiFab0[1] >= 4 &&  VPercentDiFab0[0] <= 3 && macdV > zeroline && macdA > zeroline ;
+def c9 = c9a;
+
+# IF Value is about to cross above Avg and below 0 lines = FC entry FP exit
+def C7a = macdV[0] <= macdA[0]  && APercentDiFbl0[1] >= 4 &&  APercentDiFbl0[0] <= 3 && macdV < zeroline && macdA < zeroline ;
+def c7 = C7a;
+# IF Value is about to cross below AVG abd below 0 line = FP entry FC exit
+def c8a = (macdV[0] >= macdA[0]) > zeroline  && VPercentDiFbl0[1] >= 4 &&  VPercentDiFbl0[0] <= 3 && macdV < zeroline && macdA < zeroline ;
+def c8 = c8a;
+#If Value crossed below Avg  on current candle or previous candle this = FP entry and FC exit
+def t15a = macdV < macdA and macdV[1] > macdA[1];
+def t15 = t15a;
+def t15b = t15a[1];
+#If Value crossed above Avg  on current candle or previous candle this = FC entry and FP exit
+def t16a = macdV > macdA and macdV[1] < macdA[1];
+def t16 = t16a;
+def t16b = t16a[1];
+
+
+#Directional Movement Code
+def "DI+" = DIPlus(5);
+def "DI-" = DIMinus(5);
+def DIGPercentDiF = ("DI+"  - "DI-") / (("DI+"  + "DI-") / 2) * 100;
+def DIRPercentDiF = ("DI-" - "DI+" ) / (("DI-" + "DI+" ) / 2) * 100;
+
+#DI+ is about to cross above DI- this = FC entry and FP exit
+def C5a = "DI+" [0] <= "DI-"[0]   && DIRPercentDiF[1] >= 4 &&  DIRPercentDiF[0] <= 2;
+def c5 = C5a;
+#DI+ is about to cross below DI- this = FP entry and FC exit
+def c6a = "DI+" [0] >= "DI-"[0]  && DIGPercentDiF[1] >= 4 &&  DIGPercentDiF[0] <= 2;
+def c6 = c6a;
+#If DI+ crossed below DI- on current candle or previous candle this = FP entry and FC exit
+def t17a = "DI+" < "DI-" and "DI+"[1] > "DI-"[1];
+def t17 = t17a;
+def t17b = t17a[1];
+
+#If DI+ crossed above DI- on current candle or previous candle this = FC entry and FP exit
+def t18a = "DI+" > "DI-" and "DI+"[1] < "DI-"[1];
+def t18 = t18a;
+def t18b = t18a[1];
+
+#If DI+ is cocked then this = PC entry and PP exit    DI+ or DI- is below 8 
+#If DI- is cocked then this = PP entry and PC exit
+def t19 = "DI+" < 8 and "DI+"[1] < 8;
+def t20 = "DI-" < 8 and "DI-"[1] < 8;
+def t19b = t19[1];
+def t20b = t20[1];
+
+#If DI+ trigger fired this = FC entry and FP exit
+#If DI- trigger fired this = FP entry and FC exit
+def t21 = "DI+" > 10 and "DI+"[1] < 8;
+def t22 = "DI-" > 10 and "DI-"[1] < 8;
+def t21b = t21[1];
+def t22b = t22[1];
+
+
+
+#autowave
+
+def price             = close;
+def priceH            = high;    # swing high
+def priceL            = low;     # swing low
+def ATRreversalfactor = 3.2;
+def ATR                 = reference ATR(length = 5);
+def reversalAmount      = ATRreversalfactor * ATR;
+def showlines         = yes;
+def displace          = 1;
+def showBubbleschange = yes;
+
+
+def barNumber = BarNumber();
+def barCount = HighestAll(If(IsNaN(price), 0, barNumber));
+
+rec state = {default init, undefined, uptrend, downtrend};
+rec minMaxPrice;
+
+if (GetValue(state, 1) == GetValue(state.init, 0)) {
+    minMaxPrice = price;
+    state = state.undefined;
+} else if (GetValue(state, 1) == GetValue(state.undefined, 0)) {
+    if (price <= GetValue(minMaxPrice, 1) - reversalAmount) {
+        state = state.downtrend;
+        minMaxPrice = priceL;
+    } else if (price >= GetValue(minMaxPrice, 1) + reversalAmount) {
+        state = state.uptrend;
+        minMaxPrice = priceH;
+    } else {
+        state = state.undefined;
+        minMaxPrice = GetValue(minMaxPrice, 1);
+    }
+} else if (GetValue(state, 1) == GetValue(state.uptrend, 0)) {
+    if (price <= GetValue(minMaxPrice, 1) - reversalAmount) {
+        state = state.downtrend;
+        minMaxPrice = priceL;
+    } else {
+        state = state.uptrend;
+        minMaxPrice = Max(priceH, GetValue(minMaxPrice, 1));
+    }
+} else {
+    if (price >= GetValue(minMaxPrice, 1) + reversalAmount) {
+        state = state.uptrend;
+        minMaxPrice = priceH;
+    } else {
+        state = state.downtrend;
+        minMaxPrice = Min(priceL, GetValue(minMaxPrice, 1));
+    }
+}
+
+def isCalculated = GetValue(state, 0) != GetValue(state, 1) and barNumber >= 1;
+def futureDepth =  barCount - barNumber;
+def tmpLastPeriodBar;
+if (isCalculated) {
+    if (futureDepth >= 1 and GetValue(state, 0) == GetValue(state, -1)) {
+        tmpLastPeriodBar = fold lastPeriodBarI = 2 to futureDepth + 1 with lastPeriodBarAcc = 1
+            while lastPeriodBarAcc > 0
+            do if (GetValue(state, 0) != GetValue(state, -lastPeriodBarI))
+                then -lastPeriodBarAcc
+                else lastPeriodBarAcc + 1;
+    } else {
+        tmpLastPeriodBar = 0;
+    }
+} else {
+    tmpLastPeriodBar = Double.NaN;
+}
+
+def lastPeriodBar = if (!IsNaN(tmpLastPeriodBar)) then -AbsValue(tmpLastPeriodBar) else -futureDepth;
+
+rec currentPriceLevel;
+rec currentPoints;
+if (state == state.uptrend and isCalculated) {
+    currentPriceLevel =
+        fold barWithMaxOnPeriodI = lastPeriodBar to 1 with barWithMaxOnPeriodAcc = minMaxPrice
+            do Max(barWithMaxOnPeriodAcc, GetValue(minMaxPrice, barWithMaxOnPeriodI));
+    currentPoints =
+        fold maxPointOnPeriodI = lastPeriodBar to 1 with maxPointOnPeriodAcc = Double.NaN
+            while IsNaN(maxPointOnPeriodAcc)
+            do if (GetValue(priceH, maxPointOnPeriodI) == currentPriceLevel)
+                then maxPointOnPeriodI
+                else maxPointOnPeriodAcc;
+} else if (state == state.downtrend and isCalculated) {
+    currentPriceLevel =
+        fold barWithMinOnPeriodI = lastPeriodBar to 1 with barWithMinOnPeriodAcc = minMaxPrice
+            do Min(barWithMinOnPeriodAcc, GetValue(minMaxPrice, barWithMinOnPeriodI));
+    currentPoints =
+        fold minPointOnPeriodI = lastPeriodBar to 1 with minPointOnPeriodAcc = Double.NaN
+            while IsNaN(minPointOnPeriodAcc)
+            do if (GetValue(priceL, minPointOnPeriodI) == currentPriceLevel)
+                then minPointOnPeriodI
+                else minPointOnPeriodAcc;
+} else if (!isCalculated and (state == state.uptrend or state == state.downtrend)) {
+    currentPriceLevel = GetValue(currentPriceLevel, 1);
+    currentPoints = GetValue(currentPoints, 1) + 1;
+} else {
+    currentPoints = 1;
+    currentPriceLevel = GetValue(price, currentPoints);
+}
+
+def "ZZ$" = if (barNumber == barCount or barNumber == 1) then if state == state.uptrend then priceH else priceL else if (currentPoints == 0) then currentPriceLevel else Double.NaN;
+
+rec zzSave =  if !IsNaN("ZZ$" ) then if (barNumber == barCount or barNumber == 1) then if IsNaN(barNumber[-1]) and  state == state.uptrend then priceH else priceL else currentPriceLevel else GetValue(zzSave, 1);
+
+def chg = (if barNumber == barCount and currentPoints < 0 then priceH else if barNumber == barCount and currentPoints > 0 then priceL else currentPriceLevel) - GetValue(zzSave, 1);
+
+def isUp = chg >= 0;
+
+#Higher/Lower/Equal High, Higher/Lower/Equal Low
+def xxhigh = if zzSave == priceH then Round(high, 2) else Round(xxhigh[1], 2);
+def chghigh = Round(Round(high, 2) - Round(xxhigh[1], 2), 2);
+def xxlow = if zzSave == priceL then Round(low, 2) else Round(xxlow[1], 2);
+def chglow = Round(Round(low, 2) - Round(xxlow[1], 2), 2);
+def isConf = AbsValue(chg) >= reversalAmount or (IsNaN(GetValue("ZZ$", 1)) and GetValue(isConf, 1));
+
+def conf = isConf;
+
+
+#If uptrend confirmed on 1 candle back or current candle  then this = PP entry and PC exit
+#If downtrend confirmed on 1 candle back or current candle then this = PC entry and PP exit
+def t23 =  (isUp and conf);
+def t24 =  (!isUp and conf);
+def t23b = ( isUp[1] and conf[1]);
+def t24b = ( !isUp[1] and conf[1]);
+
+def diff = MACD(8, 13, 5).diff;
+
+#If histogram goes from below 0 to above zero within 1 candle or on current candle this = PC entry and PP exit
+def t25a = diff > 0 and diff[1] < 0;
+def t25 = t25a;
+def t25b = t25a[1];
+
+#If histogram goes from above 0 to below zero within 1 candle or on current candle?this = PP entry and PC exit
+def t26a = diff < 0 and diff[1] > 0;
+def t26 = t26a;
+def t26b =  t26a[1];
+
+#IF 1 or 2 bars back are the same or within 5% of each other and below 0= FP entry and FC exit
+def t27 = diff < 0 and diff[1] < 0 and (diff > diff[1] * 0.95 and diff < diff[1] * 1.05);
+def t27b = t27[1];
+
+#IF 1 or 2 bars back are the same or within 5%  of each other and above 0= FC entry and FP exit
+def t28 = diff > 0 and diff[1] > 0 and (diff > diff[1] * 0.95 and diff < diff[1] * 1.05);
+def t28b = t28[1];
+
+#If histo is decreasing on the last 2 candles by 5% or more then this = PP entry and PC exit
+def t29 = diff < diff[1] * 0.95 and diff[1] < diff[2] * 0.95;
+def t29b = t29[1];
+
+#If histo is increasing on the last 2 candles by 5% or more then this = PC entry and PP exit
+def t30 = diff > diff[1] * 1.05 and  diff[1] > diff[2] * 1.05;
+def t30b = t30[1];
+
+def pt_pp_entry = Engulfing().Bearish + DarkCloudCover() + LongLeggedDoji().Bearish + HangingMan() + EveningStar () + FallingThreeMethods() + ShootingStar();
+
+def pt_pp_exit = Engulfing().Bullish + LongLeggedDoji().Bullish + Hammer() + InvertedHammer() + PiercingLine() + MorningStar()  + RisingThreeMethods() + MorningDojiStar();
+
+def pt_PC_entry = Engulfing().Bullish + LongLeggedDoji().Bullish + Hammer() + InvertedHammer() + PiercingLine() + MorningStar()  + RisingThreeMethods() + MorningDojiStar();
+
+def pt_PC_exit = Engulfing().Bearish + DarkCloudCover() + LongLeggedDoji().Bearish + HangingMan() + EveningStar () + FallingThreeMethods() + ShootingStar();
+
+def pt_pp_entryb = pt_pp_entry[1];
+
+def pt_pp_exitb = pt_pp_exit[1];
+
+def pt_PC_entryb = pt_PC_entry[1] ;
+
+def pt_PC_exitb = pt_PC_exit[1] ;
+
+
+#if K% and D% are at 98 or greater on previous candle and K% is less than D% on current candle = FP entry and? FC exit
+def t31 = k[1] >= 98 and d[1] >= 98 and k < d ;
+def t31b = t31[1] ;
+#If K% and D% are at 2 or less on previous candle and K% is greater than D% on current candle = FC entry and FP exit
+
+def t32 = k[1] <= 2 and d[1] <= 2 and k > d ;
+def t32b = t32[1];
+
+
+###################rsi div ####################################
+def RSIfalsefactor = 1.5;
+def Percent = 0.1;
+def RSI_Percent = 0.1;
+
+def "%K" = Average(RSIS, 3);
+def "%D" = Average("%K", 5);
+
+def cross = "%K" < "%D" and  "%K"[1] > "%D"[1];
+
+def cross1r = "%K" < "%D" and  "%K"[1] > "%D"[1] and  "%D" - "%K" >= RSIfalsefactor;
+
+def cross1r1 =   "%K"[2] > "%D"[2] and ( "%D" - "%K" >= RSIfalsefactor or  "%D"[1] - "%K"[1] >= RSIfalsefactor);
+def cross1os = GetMaxValueOffset(cross1r1, 50)[1];
+
+#Find the highest K% =K1 and its price high=H1 before current cross
+def hk1 = Highest( "%K", 5);
+def h1 = GetValue( h, GetMaxValueOffset("%K", 5));
+
+#Find the highest K% =K2 and its price high=H2 before previous cross
+def hk2 = GetValue(Highest( "%K", 5), cross1os);
+def h2 = GetValue(Highest( h, 5), cross1os);
+
+def testhigh = h2 * (100 + Percent) / 100 < h1;
+def testK = hk2 * (100 - RSI_Percent) / 100 > hk1;
+
+def temp1 = testhigh and testK ;
+def BearishRSI_div = if (cross1r and temp1) then 1 else 0;
+
+#bull div
+def cross2r =   "%K"[1] < "%D"[1] and "%K" - "%D" >= RSIfalsefactor ;
+def cross2r1 = ( "%K"[1] - "%D"[1] >= RSIfalsefactor or "%K" - "%D" >= RSIfalsefactor ) and  "%K"[2] < "%D"[2];
+def cross2os = GetMaxValueOffset(cross2r1, 50)[1];
+
+def lk1 = Lowest( "%K", 5);
+def l1 = GetValue( l, GetMinValueOffset("%K", 5));
+
+def lk2 = GetValue(Lowest( "%K", 5), cross2os);
+def l2 = GetValue(Lowest( l, 5), cross2os);
+
+#or preL* (100 - percent) / 100>l[1]
+def testlow = l2 * (100 - Percent) / 100 > l1 ;
+def testK2 = lk2 * (100 + RSI_Percent) / 100 < lk1;
+
+def temp2 = testlow and testK2  ;
+def BullishRSI_div = if (cross2r and temp2) then 1 else 0;
+
+
+def t35 = BearishRSI_div;
+def t35b = BearishRSI_div[1];
+def t43 = BullishRSI_div;
+def t43b = BullishRSI_div[1];
+
+################### end of rsi div ##################
+
+################## MACD DIV ##################
+def macd_Percent = 0.1;
+def MACDfalsefactor = 0.015;
+def t15a1 =  macdA - macdV >= MACDfalsefactor and macdV[1] > macdA[1];
+def MACDcross1os = GetMaxValueOffset(t15a1, 50)[1];
+
+def hmacdV1 = Highest( macdV, 5);
+def h1macd = GetValue( h, GetMaxValueOffset(macdV, 5));
+
+#previous value
+def hmacdV2 = GetValue(Highest(macdV, 5), MACDcross1os);
+#previous high
+def h2macd = GetValue(Highest( h, 5), MACDcross1os);
+
+def macdtesthigh = h2macd * (100 + Percent) / 100 < h1macd;
+def testmacdV = hmacdV2 * (100 - macd_Percent) / 100 > hmacdV1;
+
+def macdtemp1 = macdtesthigh and testmacdV;
+def BearishMACD_div = if (t15a1 and macdtemp1) then 1 else 0;
+  
+#If Value crossed above Avg  on current candle or previous candle this = FC entry and FP exit
+def t16a1 = macdV - macdA > MACDfalsefactor  and macdV[1] < macdA[1];
+def MACDcross2os = GetMaxValueOffset(t16a1, 50)[1];
+
+def lmacdV1 = Lowest( macdV, 5);
+def l1macd = GetValue( l, GetMinValueOffset(macdV, 5));
+#previous value
+def lmacdV2 = GetValue(Lowest(macdV, 5), MACDcross2os);
+#previous low
+def l2macd = GetValue(Lowest( l, 5), MACDcross2os);
+
+def MACDtestlow = l2macd * (100 - Percent) / 100 > l1macd;
+def testmacdV2 = lmacdV2 * (100 + macd_Percent) / 100 < lmacdV1;
+
+def temp2MACD = MACDtestlow and testmacdV2;
+def BullishMACD_div = if (t16a1 and temp2MACD) then 1 else 0;
+
+def t44 = BearishMACD_div;
+def t44b = BearishMACD_div[1];
+def t38 = BullishMACD_div;
+def t38b = BullishMACD_div[1];
+
+################### end of macd div ####################################
+
+def bd = BodyHeight();
+#Tweezers Top
+def ttc1 = bd[1] == Highest(bd, 10) and h[1] == Highest(h, 10)[1] ;
+def ttc2 = c[1] > o[1] and c < o and l > l[1] and c < c[1];
+def TweezersTop = ttc1 and ttc2;
+
+def t39 = TweezersTop;
+def t39b = TweezersTop[1];
+
+#Tweezers Bottom
+def tbc1 = bd == Highest(bd, 10) and l == Lowest(l, 10)[1] ;
+def tbc2 = c[1] < o[1] and c > o and l < l[1] and c > c[1];
+def TweezersBottom = tbc1 and tbc2;
+
+def t40 = TweezersBottom;
+def t40b = TweezersBottom[1];
+
+#Gravestone Doji
+def Doji = IsDoji(15,  0.05);
+def upwick = h - c;
+def gdc1 = upwick == Highest(upwick, 10);
+def GraveDoji = Doji and gdc1;
+
+def t41 = GraveDoji;
+def t41b = GraveDoji[1];
+
+#Dragonfly Doji 
+
+def dnwick = c - l;
+def ddc1 = dnwick == Highest(dnwick, 10);
+def DragonflyDoji = Doji and ddc1;
+
+def t42 = DragonflyDoji;
+def t42b = DragonflyDoji[1];
+
+## Bearish CandleStick Patterns Soft PP Entry/PC Exit
+def t45 = Engulfing().Bearish;
+def t45b = t45[1];
+def t46 = DarkCloudCover();
+def t46b =  t46[1];
+def t47 = HangingMan();
+def t47b =  t47[1];
+def t48 = EveningStar ();
+def t48b =  t48[1];
+def t49 = FallingThreeMethods();
+def t49b =  t49[1];
+def t50 = ShootingStar();
+def t50b =  t50[1];
+
+## Bullish CandleStick Patterns Soft PC Entry/PP Exit
+def t51 = Engulfing().Bullish;
+def t51b = t51[1];
+def t52 = LongLeggedDoji().Bullish;
+def t52b =  t52[1];
+def t53 = Hammer();
+def t53b =  t53[1];
+def t54 = InvertedHammer();
+def t54b =  t54[1];
+def t55 = PiercingLine();
+def t55b = t55[1];
+def t56 = MorningStar();
+def t56b = t56[1];
+def t57 = RisingThreeMethods();
+def t57b = t57[1];
+def t58 = MorningDojiStar();
+def t58b = t58[1];
+
+##################### NEW PATTERNS ###################################
+
+def pc_entry =t1 + t4 + t8 + t13 + t19 + t24 + (t25 or t30) + t36 + (pt_PC_entry or t40 or t42) ;
+def pp_entry = t2 +  t3 + t7 + t14 + t20 + t23 + (t26 or t29) + t37 + (pt_pp_entry or t39 or t41);
+
+def pc_entryB = t1b +  t4b + t8b + t13b + t19b + t24b + (t25b or t30b) + t36b + (pt_PC_entryb or t40b or t42b) ;
+def pp_entryB = t2b +  t3b + t7b + t14b + t20b + t23b + (t26b or t29b) + t37b + (pt_pp_entryb  or t39b or t41b);
+
+def pp_exit=pc_entry;
+def pc_exit=pp_entry;
+
+def fc_entry =(C1 or t10) + (t12 or t32 or c3 or t43) + (t18 or t21 or c5) + t27 + (t16 or c7 or c10 or t38);
+def fp_entry = t2 + (t9 or C2) + (t11 or t31 or c4 or t35) + (t17 or t22 or c6) + t28 + (t15 or c9 or c8 or t44);
+
+def fc_entryb =t10b + (t12b or t32b or t43b) + (t16b or t38b) + (t18b or t21b) + t27b;
+def fp_entryb =t9b + (t11b or t31b or t35b) + (t15b or t44b) + (t17b or t22b) + t28b;
+
+def fp_exit=fc_entry;
+def fc_exit=fp_entry;
+
+def fc=(fc_entry+fc_exit);
+def fp=fp_entry+fp_exit;
+
+input label = {default "all", "call", "put"};
+
+
+#LABELCOUNT
+AddLabel( (fc_entry), if label != label.put then "HC current candle: " + (fc_entry) else "" , Color.Lime);
+AddLabel( (fc_entryb), if label != label.put then "HC previous candle: " + (fc_entryb) else "" , Color.LIGHT_GREEN);
+
+AddLabel( (pc_entry), if label != label.put then "SC current candle: " + (pc_entry) else "" , Color.Lime);
+AddLabel( (pc_entryB), if label != label.put then "SC previous candle: " + (pc_entryB) else "" , Color.LIGHT_GREEN);
+
+AddLabel( (fp_entry), if label != label.put then "HP current candle:: " + (fp_entry) else "" , Color.PINK);
+AddLabel( (fp_entryb), if label != label.put then "HP previous candle: " + (fp_entryb) else "" , Color.DARK_RED);
+
+AddLabel( (pp_entry), if label != label.put then "SP current candle: " + (pp_entry) else "" , Color.PINK);
+AddLabel( (pp_entryB), if label != label.put then "SP previous candle: " + (pp_entryB) else "" , Color.DARK_RED);
+
+def FCENTRYN =(C1 or t10 or t10b) + (t12 or t12b or t32 or c3 or t43) + (t18 or t18b or t21 or c5) + t27 + (t16 or t16b or c7 or c10 or t38) ;
+def FPENTRYN = (t9 or t9b or C2) + (t11 or t11b or t31 or c4 or t35) + (t17 or t17b  or t22 or c6) + t28 + (t15 or t15b or c9 or c8 or t44);
+
+
+
+#VISUAL DISPLAY
+plot FCALL = if FCENTRYN >= 3 then 1 else Double.NaN;
+FCALL.SetLineWeight(5);
+FCALL.SetDefaultColor(Color.CYAN);
+FCALL.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+
+plot FPALL = if FPENTRYN >= 3 then 1 else Double.NaN;
+FPALL.SetLineWeight(5);
+FPALL.SetDefaultColor(Color.PINK);
+FPALL.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+
+AddVerticalLine(FCALL, "SLI Call", Color.CYAN);
+AddVerticalLine(FPALL, "SLI PUT", Color.YELLOW );
+
+##Bullish Labels
+
+##Bullish Bolinger Band Labels
+AddLabel(t1, "BBB HARD" , Color.Cyan);
+AddLabel(t4, "Rising BBB Soft" , Color.Cyan);
+AddLabel(t36, "Rising TBB Soft" , Color.Cyan);
+
+#Bullish RSI LABELS
+AddLabel(t12, "RSI Crossing HARD" , Color.Cyan);
+AddLabel(t12b, "RSI Just Crossed HARD" , Color.Cyan);
+AddLabel(c3, "RSI About To Cross HARD" , Color.Cyan);
+AddLabel(t13, "RSI Below 20 Soft" , Color.Cyan);
+AddLabel(t32, "RSI 0 HARD" , Color.Cyan);
+AddLabel(t43, "RSI Divergence HARD" , Color.Cyan);
+
+#Bullish MACD LABELS
+AddLabel(t16, "MACD Crossing HARD" , Color.Cyan);
+AddLabel(t16b, "MACD Just Crossed HARD" , Color.Cyan);
+AddLabel(c7 or c10, "MACD About To Cross HARD" , Color.Cyan);
+AddLabel(t27, "Flat Histo HARD" , Color.Cyan);
+AddLabel(t25, "Histo Reversal Soft" , Color.Cyan);
+AddLabel(t30, "Increasing Histo Soft" , Color.Cyan);
+AddLabel(t38, "MACD Divergence HARD" , Color.Cyan);
+
+##Bullish MA LABELS
+AddLabel(C1, "MA About To Cross HARD" , Color.Cyan);
+AddLabel(t10, "MA Crossing HARD" , Color.Cyan);
+AddLabel(t10b, "MA Just Crossed HARD" , Color.Cyan);
+
+##Bullish ADX Labels
+AddLabel(t21, "DI+ Fired HARD" , Color.Cyan);
+AddLabel(t18, "DI+ Crossed HARD" , Color.Cyan);
+AddLabel(t18b, "DI+ Just Crossed HARD" , Color.Cyan);
+AddLabel(c5, "DI+ About To Cross HARD" , Color.Cyan);
+AddLabel(t19, "DI+ Cocked Soft" , Color.Cyan);
+
+##Bullish Candle Stick Labels
+AddLabel(t40, "Tweezer Bottom Soft" , Color.Cyan);
+AddLabel(t42, "Dragon Fly Doji Soft" , Color.Cyan);
+AddLabel(t51, "Engulfing Pattern Soft" , Color.Cyan);
+AddLabel(t52, "long Legged Doji Soft" , Color.Cyan);
+AddLabel(t53, "Hammer Soft" , Color.Cyan);
+AddLabel(t54, "Inverted HammerSoft" , Color.Cyan);
+AddLabel(t55, "Piercing LineSoft" , Color.Cyan);
+AddLabel(t56, "Morning Star Soft" , Color.Cyan);
+AddLabel(t57, "Rising Three Methods Soft" , Color.Cyan);
+AddLabel(t58, "Morning Doji Star Soft" , Color.Cyan);
+
+##Bullish MISC Labels
+AddLabel(t24, "AW Confirmed Soft" , Color.Cyan);
+AddLabel(t8, "MA Support Soft" , Color.Cyan);
+
+
+
+##Bearish Labels
+
+
+##Bearish Bolinger Band Labels
+AddLabel(t2, "TBB HARD" , Color.PINK);
+AddLabel(t3 , "Falling TBB Soft" , Color.PINK);
+AddLabel(t37 , "Falling BBB Soft" , Color.PINK);
+
+#Bearish RSI LABELS
+AddLabel(t31, "RSI 100 HARD" , Color.PINK);
+AddLabel(t11 , "RSI Crossing HARD" , Color.PINK);
+AddLabel(t11b, "RSI Just Crossed HARD" , Color.PINK);
+AddLabel(c4, "RSI About To Cross HARD" , Color.PINK);
+AddLabel(t14, "RSI above 80 soft" , Color.PINK);
+AddLabel(t35, "RSI Divergence HARD" , Color.PINK);
+
+##Bearish MACD LABELS
+AddLabel(t28, "Flat Histo HARD" , Color.PINK);
+AddLabel(t15, "MACD Crossing HARD" , Color.PINK);
+AddLabel(t15b, "MACD Just Crossed HARD" , Color.PINK);
+AddLabel(c8 or c9, "MACD About To Cross HARD" , Color.PINK);
+AddLabel(t26, "Histo Reversal Soft" , Color.PINK);
+AddLabel(t29, "Decreasing Histo Soft" , Color.PINK);
+AddLabel(t44, "MACD Divergence HARD" , Color.PINK);
+
+##Bearish MA LABELS
+AddLabel(t9, "MA Crossed HARD" , Color.PINK);
+AddLabel(C2, "MA About To Cross HARD" , Color.PINK);
+AddLabel(t9b , "MA Just Crossed HARD" , Color.PINK);
+
+##Bearish ADX Labels
+AddLabel(t17, "DI- Crossed HARD" , Color.PINK);
+AddLabel(c6, "DI- About to Cross HARD" , Color.PINK);
+AddLabel(t17b, "DI- Just Crossed HARD" , Color.PINK);
+AddLabel(t22, "DI- Fired HARD" , Color.PINK);
+AddLabel(t20, "DI- Cocked Soft" , Color.PINK);
+
+##Bearish Candle Stick Labels
+AddLabel(t39, "Tweezer Top Soft" , Color.PINK);
+AddLabel(t41, "Gravestone Doji Soft" , Color.PINK);
+AddLabel(t45, "Engulfing Pattern Soft" , Color.PINK);
+AddLabel(t46, "Dark Cloud Cover Soft" , Color.PINK);
+AddLabel(t47, "Hanging Man Soft" , Color.PINK);
+AddLabel(t48, "Evening Star Soft" , Color.PINK);
+AddLabel(t49, "Falling Three Methods Soft" , Color.PINK);
+AddLabel(t50, "Shooting star Soft" , Color.PINK);
+
+##Bearish MISC Labels
+AddLabel(t7, "MA Support Soft" , Color.PINK);
+AddLabel(t23, "AW Confirmed Soft" , Color.PINK);
